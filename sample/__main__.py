@@ -1,9 +1,11 @@
 from .api import HoxhuntApi
+from .api import IncidentsIter
 
 AUTH_TOKEN = ""
-API_URL = ""
+API_URL = "https://app.hoxhunt.dev/graphql-external"
 
 if __name__ == '__main__':
     api = HoxhuntApi(auth_token=AUTH_TOKEN, api_url=API_URL)
-    result = api.run_incidents_query()
-    print(result)
+    iter = IncidentsIter(api)
+    print(next(iter))
+    print(next(iter))

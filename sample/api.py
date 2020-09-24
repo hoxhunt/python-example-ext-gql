@@ -18,52 +18,66 @@ class HoxhuntApi:
         if request.status_code == 200:
             return request.json()
         else:
+            print(request.reason)
             raise Exception(
                 "Query failed to run by returning code of {}. {}"
                 .format(request.status_code, query))
 
+
+class IncidentsIter:
+    skip = 0
+    first = 10
+
+    def __init__(self, api_instance):
+        self.api = api_instance
+
+    def __next__(self):
+        incidents = self.run_incidents_query()
+        self.skip += 10
+        self.first += 10
+        return incidents
+
     def run_incidents_query(self):
-        query = """ 
-        query queryIncidentsWithIndicators {
-            incidents(first: 10, skip: 0, sort: createdAt_DESC) {
-                createdAt
-                updatedAt
-                severity
-                policyName
-                lastReportedAt
-                firstReportedAt
-                threatCount
-                threats {
-                    email {
-                        from {
-                            address
+        query = """query queryIncidentsWithIndicators($skip: Int, $first: Int) {
+            incidents(first: $first, skip: $skip, sort: createdAt_DESC) {
+                    createdAt
+                    updatedAt
+                    severity
+                    policyName
+                    lastReportedAt
+                    firstReportedAt
+                    threatCount
+                    threats {
+                        email {
+                            from {
+                                address
+                            }
+                            attachments {
+                                hash
+                            }
+                            
                         }
-                        attachments {
-                            hash
+                    enrichments {
+                        hops {
+                            from
+                            by
                         }
-                        
+                        links {
+                            href
+                            label
+                        }
                     }
-                enrichments {
-                    hops {
-                        from
-                        by
+                    userModifiers {
+                        userActedOnThreat
+                        repliedToEmail
+                        downloadedFile
+                        openedAttachment
+                        visitedLink
+                        enteredCredentials
+                        userMarkedAsSpam
                     }
-                    links {
-                        href
-                        label
-                    }
-                }
-                userModifiers {
-                    userActedOnThreat
-                    repliedToEmail
-                    downloadedFile
-                    openedAttachment
-                    visitedLink
-                    enteredCredentials
-                    userMarkedAsSpam
                 }
             }
-        }
-        }
-        """
-        return self.do_query(query)
+        }"""
+        variables = {'skip': self.skip, 'first': self.first}
+        return self.api.do_query(query, variables)
